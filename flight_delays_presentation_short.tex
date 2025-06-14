@@ -1,0 +1,182 @@
+\documentclass[12pt,aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{colortbl}
+\usepackage{multirow}
+
+\setbeamertemplate{caption}{\raggedright\insertcaption\par}
+
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+\title{Predykcja Opóźnień Lotów}
+\subtitle{Uczenie Maszynowe - Projekt}
+\author{K. Arkit, D. Chomiak, Ł. Guziczak, D. Sobótka}
+\institute{}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\section{Problem i dane}
+
+\begin{frame}{Definicja problemu}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Cel projektu:}
+\begin{itemize}
+    \item Klasyfikacja binarna: opóźnienie >15 minut
+    \item Dataset: US Flight Delays 2015
+    \item 5.8M rekordów → 500k do analizy
+    \item 31 atrybutów o lotach
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Dlaczego ten problem?}
+\begin{itemize}
+    \item Duży, rzeczywisty dataset
+    \item Problem klasyfikacji z niezbalansowanymi klasami
+    \item Możliwość testowania różnych technik ML
+\end{itemize}
+
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{delay_distribution.png}
+    \caption{Rysunek 1. Rozkład opóźnień - 19.4\% lotów opóźnionych}
+\end{figure}
+\end{columns}
+\end{frame}
+
+\section{Metodologia}
+
+\begin{frame}{Ewolucja modelu - 4 etapy}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{comparison_metrics.png}
+    \caption{Rysunek 2. Porównanie metryk w kolejnych etapach rozwoju}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Baseline}: Tylko surowe dane z datasetu (12 cech) → niski recall (14.5\%)
+    \item \textbf{Data Leakage}: Pokazanie pułapki wycieku danych
+    \item \textbf{Fast Optimized}: Ensemble bez ekstremalnych wartości
+    \item \textbf{Final Model}: Pełne dane z feature engineering (28 cech)
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Porównanie modeli - krzywe ROC}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.6\textheight]{roc_curves_comparison.png}
+    \caption{Rysunek 3. Krzywe ROC - ewolucja wydajności (AUC: 0.643 → 0.769)}
+\end{figure}
+
+\textbf{Kluczowe obserwacje:}
+\begin{itemize}
+    \item Etap 2 (Data Leakage) - perfekcyjny AUC = ostrzeżenie!
+    \item Final Model osiąga najlepszy uczciwy wynik (AUC = 0.769)
+\end{itemize}
+\end{frame}
+
+\section{Wyniki}
+
+\begin{frame}{Analiza najważniejszych cech}
+\begin{columns}
+\column{0.55\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{feature_importance_final.png}
+    \caption{Rysunek 4. Ważność cech w modelu finalnym}
+\end{figure}
+
+\column{0.45\textwidth}
+\textbf{Dominują cechy czasowe:}
+\begin{itemize}
+    \item IS\_RUSH\_HOUR (16.5\%)
+    \item HOUR\_SIN/COS (cykliczne kodowanie)
+    \item IS\_WEEKEND, IS\_FRIDAY
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Inne ważne cechy:}
+\begin{itemize}
+    \item Linia lotnicza (8.8\%)
+    \item Lotnisko wylotu (7.9\%)
+    \item Dystans lotu (7.6\%)
+\end{itemize}
+
+\vspace{0.5cm}
+\textit{Wniosek: Czas odlotu ma największy wpływ na opóźnienia}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Wydajność finalna}
+\begin{columns}
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{confusion_matrix_final.png}
+    \caption{Rysunek 5. Macierz pomyłek - Final Model}
+\end{figure}
+
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{recall_by_delay_size.png}
+    \caption{Rysunek 6. Model ma problem z ekstremalnymi opóźnieniami}
+\end{figure}
+\end{columns}
+
+\begin{center}
+\textbf{Metryki}: F1 = 0.491, Recall = 54.4\%, Precision = 45.0\%, ROC-AUC = 0.769
+\end{center}
+\end{frame}
+
+\section{Wnioski}
+
+\begin{frame}{Podsumowanie}
+\textbf{Co udało się osiągnąć:}
+\begin{itemize}
+    \item Przetestowano 4 różne podejścia do modelowania
+    \item Zidentyfikowano i naprawiono problem data leakage
+    \item Feature engineering zwiększył liczbę cech z 12 do 28
+    \item Najlepszy model: XGBoost z ROC-AUC = 0.769
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Napotkane wyzwania:}
+\begin{itemize}
+    \item Niezbalansowane klasy (19.4\% opóźnień)
+    \item Trade-off między recall a precision
+    \item Słaba detekcja ekstremalnych opóźnień (>300 min)
+    \item Brak danych o warunkach pogodowych
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Propozycje ulepszeń:}
+Model dwuetapowy, dane pogodowe, stacking ensemble, kalibracja prawdopodobieństw
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Dziękujemy za uwagę!
+
+\vspace{1.5cm}
+\Large Pytania?
+
+\vspace{1.5cm}
+\normalsize
+Kod źródłowy: GitHub/ML-FlightDelaysAndCancellations
+\end{center}
+\end{frame}
+
+\end{document}
